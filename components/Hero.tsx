@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown, Sparkles } from "lucide-react";
 import { useRef } from "react";
+import { RuneCanvas } from "./RuneCanvas";
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -18,10 +19,12 @@ export function Hero() {
     <section
       ref={ref}
       id="top"
-      className="relative flex min-h-screen flex-col justify-between overflow-hidden px-6 pt-36 pb-12 sm:px-12 lg:px-24"
+      className="relative flex min-h-screen flex-col justify-between overflow-hidden px-6 pt-36 pb-12 sm:px-12 lg:px-24 cursor-crosshair select-none"
     >
       <div className="absolute inset-0 grid-bg opacity-40" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+
+      <RuneCanvas parentRef={ref} />
 
       <motion.div style={{ y, opacity }} className="relative z-10 flex flex-1 flex-col justify-center max-w-6xl">
         <motion.div
@@ -60,22 +63,7 @@ export function Hero() {
           </div>
 
           <div className="md:col-span-5 md:pl-8 md:border-l md:border-foreground/10">
-            <div className="mb-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-muted uppercase">
-              <Sparkles className="h-3 w-3" />
-              Current focus
-            </div>
-            <p className="text-sm leading-relaxed text-foreground/80">
-              Building{" "}
-              <a
-                href="https://github.com/rayenking/iris-ssh-manager"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-muted underline-offset-4 transition-colors hover:decoration-foreground"
-              >
-                Iris SSH Manager
-              </a>
-              {" "}— a Tauri + Rust SSH client as a personal alternative to Termius.
-            </p>
+            <CurrentFocus />
           </div>
         </motion.div>
 
@@ -150,5 +138,28 @@ function AnimatedWord({ word, delay = 0 }: { word: string; delay?: number }) {
         </motion.span>
       ))}
     </span>
+  );
+}
+
+function CurrentFocus() {
+  return (
+    <div className="pointer-events-none">
+      <div className="mb-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-muted uppercase">
+        <Sparkles className="h-3 w-3" />
+        Current focus
+      </div>
+      <p className="text-sm leading-relaxed text-foreground/80">
+        Building{" "}
+        <a
+          href="https://github.com/rayenking/iris-ssh-manager"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pointer-events-auto underline decoration-muted underline-offset-4 transition-colors hover:decoration-foreground"
+        >
+          Iris SSH Manager
+        </a>
+        {" "}— a Tauri + Rust SSH client as a personal alternative to Termius.
+      </p>
+    </div>
   );
 }

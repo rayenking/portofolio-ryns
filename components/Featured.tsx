@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, Terminal, Shield, Zap, Package, Camera, Sparkles, Layout, Share2 } from "lucide-react";
 
 type FeaturedProject = {
@@ -278,23 +279,77 @@ function TerminalMock() {
 }
 
 function PhotoboothMock() {
+  const slides = [
+    { src: "/nabooth-1.png", label: "Booth Interface" },
+    { src: "/nabooth-2.png", label: "Landing Page" },
+    { src: "/nabooth-3.png", label: "Plans" },
+  ];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 3200);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
   return (
     <div className="relative aspect-video overflow-hidden rounded-xl border border-foreground/10 bg-stone-100 dark:bg-stone-900">
-      <Image
-        src="/nabooth-preview.png"
-        alt="na-booth landing page"
-        fill
-        sizes="(max-width: 1024px) 100vw, 600px"
-        className="object-cover object-top"
-        priority={false}
-      />
-      <div className="absolute bottom-3 left-3 flex gap-1.5">
+      {/* Corner frame accents */}
+      <div className="pointer-events-none absolute inset-2 z-20 rounded-lg">
+        <span className="absolute left-0 top-0 h-3 w-3 border-l border-t border-white/40" />
+        <span className="absolute right-0 top-0 h-3 w-3 border-r border-t border-white/40" />
+        <span className="absolute bottom-0 left-0 h-3 w-3 border-b border-l border-white/40" />
+        <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-white/40" />
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={slides[index].src}
+            alt={`na-booth ${slides[index].label}`}
+            fill
+            sizes="(max-width: 1024px) 100vw, 600px"
+            className="object-cover object-top"
+            priority={index === 0}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Label tag */}
+      <div className="absolute bottom-3 left-3 z-10 flex gap-1.5">
         <span className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-mono text-white tracking-wider uppercase backdrop-blur">
           ● LIVE
         </span>
-        <span className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-mono text-white tracking-wider uppercase backdrop-blur">
-          na-booth.itsryns.cyou
-        </span>
+        <motion.span
+          key={`label-${index}`}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-mono text-white tracking-wider uppercase backdrop-blur"
+        >
+          {slides[index].label}
+        </motion.span>
+      </div>
+
+      {/* Slide indicators */}
+      <div className="absolute bottom-3 right-3 z-10 flex gap-1.5">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIndex(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            className={`h-1 rounded-full transition-all ${
+              i === index ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/60"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
