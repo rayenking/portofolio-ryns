@@ -37,6 +37,13 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${instrument.variable} ${jetbrains.variable} antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{document.documentElement.dataset.theme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="noise min-h-screen bg-background text-foreground">
         {children}
       </body>

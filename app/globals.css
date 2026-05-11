@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root[data-theme="light"] {
   --background: #f5f5f4;
   --foreground: #0c0a09;
   --muted: #78716c;
@@ -9,8 +10,17 @@
   --grain: 0.04;
 }
 
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #e7e5e4;
+  --muted: #78716c;
+  --subtle: #1c1917;
+  --accent: #fafaf9;
+  --grain: 0.05;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #0a0a0a;
     --foreground: #e7e5e4;
     --muted: #78716c;

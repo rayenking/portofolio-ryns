@@ -331,9 +331,14 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest("a, button, input, textarea, select")) return;
-      if (e.button !== 0) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       drawingRef.current = true;
       drawingPointsRef.current = [getLocal(e)];
+
+      // prevent scroll/pan on touch
+      if (e.pointerType === "touch" || e.pointerType === "pen") {
+        e.preventDefault();
+      }
 
       // click near sphere → explode
       if (distToSphere(drawingPointsRef.current[0]) < radiusRef.current * 1.2) {
@@ -349,6 +354,9 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
 
     const onPointerMove = (e: PointerEvent) => {
       if (!drawingRef.current) return;
+      if (e.pointerType === "touch" || e.pointerType === "pen") {
+        e.preventDefault();
+      }
       const p = getLocal(e);
       const last = drawingPointsRef.current[drawingPointsRef.current.length - 1];
       if (!last || Math.hypot(p.x - last.x, p.y - last.y) > 3) {
@@ -356,7 +364,7 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       }
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
       if (!drawingRef.current) return;
       drawingRef.current = false;
       const pts = drawingPointsRef.current;
@@ -370,11 +378,16 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
         if (size > 30) triggerShape(pts);
       }
       drawingPointsRef.current = [];
+      // dismiss default behaviors
+      if (e.pointerType === "touch" || e.pointerType === "pen") {
+        e.preventDefault();
+      }
     };
 
-    parent.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
+    parent.addEventListener("pointerdown", onPointerDown, { passive: false });
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp, { passive: false });
+    window.addEventListener("pointercancel", onPointerUp, { passive: false });
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
@@ -471,6 +484,7 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       parent.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
   }, [parentRef]);
 

@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { name: "About", href: "#about" },
@@ -52,13 +53,16 @@ export function Nav() {
             </li>
           ))}
         </ul>
-        <a
-          href="#contact"
-          className="group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-4 py-1.5 text-xs text-background transition-all hover:bg-transparent hover:text-foreground"
-        >
-          Say hi
-          <span className="transition-transform group-hover:translate-x-0.5">→</span>
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href="#contact"
+            className="group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-4 py-1.5 text-xs text-background transition-all hover:bg-transparent hover:text-foreground"
+          >
+            Say hi
+            <span className="transition-transform group-hover:translate-x-0.5">→</span>
+          </a>
+          <ThemeToggle />
+        </div>
       </div>
     </motion.nav>
   );
