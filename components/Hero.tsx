@@ -51,12 +51,12 @@ export function Hero() {
         >
           <div className="md:col-span-7">
             <p className="text-xl leading-[1.4] text-foreground sm:text-2xl md:text-3xl">
-              <span className="text-muted">A </span>
-              <span className="font-serif italic">backend-first</span>
-              <span className="text-muted"> developer building</span>
+              <span className="font-serif italic">Backend developer</span>
+              <span className="text-muted">, </span>
               <br />
-              <span>cross-platform tools </span>
-              <span className="text-muted">in </span>
+              <span>team player</span>
+              <span className="text-muted">. </span>
+              <span className="text-muted">Bikin tools di </span>
               <span className="font-mono text-base sm:text-lg md:text-xl">Rust · Go · TS</span>
               <span className="text-muted">.</span>
             </p>
