@@ -50,14 +50,14 @@ export function Hero() {
           className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-12"
         >
           <div className="md:col-span-7">
-            <p className="text-xl leading-[1.4] text-foreground sm:text-2xl md:text-3xl">
+            <p className="text-lg leading-[1.4] text-foreground sm:text-xl md:text-2xl">
               <span className="font-serif italic">Passionate programmer</span>
               <span className="text-muted"> with 5+ years of </span>
               <span>freelance experience</span>
               <span className="text-muted">.</span>
               <br />
               <span className="text-muted">Fluent in </span>
-              <span className="font-mono text-base sm:text-lg md:text-xl">Rust · Go · TS · Python</span>
+              <span className="font-mono text-sm sm:text-base md:text-lg">Go · TS · Python · Rust</span>
               <span className="text-muted">.</span>
             </p>
           </div>
