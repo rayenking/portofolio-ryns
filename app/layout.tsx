@@ -23,8 +23,19 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://itsryns.cyou"),
   title: "Ryns — Backend Developer",
   description: "Backend developer yang juga kerjain frontend. Building things that work, and look good doing it.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Ryns — Backend Developer",
+    description: "Passionate programmer with 5+ years of freelance experience. Go · TS · Python · Rust.",
+    images: ["/logo.png"],
+    type: "website",
+  },
 };
 
 export default function RootLayout({

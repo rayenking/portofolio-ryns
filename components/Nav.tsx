@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from "react";
+import Image from "next/image";
 import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
@@ -34,8 +35,15 @@ export function Nav() {
           href="#top"
           className="group flex items-center gap-2 font-serif text-xl tracking-tight"
         >
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-full border border-foreground/15 bg-background italic transition-all group-hover:border-foreground/40">
-            r
+          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background transition-all group-hover:scale-105 group-hover:border-foreground/40">
+            <Image
+              src="/logo.png"
+              alt="Ryns logo"
+              width={36}
+              height={36}
+              className="h-full w-full object-cover dark:invert"
+              priority
+            />
           </span>
           <span className="transition-opacity group-hover:opacity-60">
             ryns<span className="italic text-muted">.</span>
