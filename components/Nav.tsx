@@ -37,11 +37,20 @@ export function Nav() {
         >
           <span className="relative z-0 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background transition-all group-hover:scale-105 group-hover:border-foreground/40">
             <Image
-              src="/logo.png"
+              src="/logo-black.png"
               alt="Ryns logo"
               width={36}
               height={36}
-              className="h-full w-full object-cover dark:invert"
+              className="h-full w-full object-cover logo-light"
+              priority
+            />
+            <Image
+              src="/logo.png"
+              alt=""
+              width={36}
+              height={36}
+              className="absolute inset-0 h-full w-full object-cover logo-dark"
+              aria-hidden
               priority
             />
           </span>

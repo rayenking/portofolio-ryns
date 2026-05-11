@@ -134,11 +134,19 @@ export function Contact() {
           <span className="flex items-center gap-2">
             <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background">
               <Image
-                src="/logo.png"
+                src="/logo-black.png"
                 alt="Ryns logo"
                 width={24}
                 height={24}
-                className="h-full w-full object-cover dark:invert"
+                className="h-full w-full object-cover logo-light"
+              />
+              <Image
+                src="/logo.png"
+                alt=""
+                width={24}
+                height={24}
+                className="absolute inset-0 h-full w-full object-cover logo-dark"
+                aria-hidden
               />
             </span>
             <span>© 2026 Ryns · rayenking</span>

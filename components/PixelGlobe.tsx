@@ -14,6 +14,9 @@ type Particle = {
   homeY: number;
   targetX: number;
   targetY: number;
+  startX: number;
+  startY: number;
+  delay: number;
   trailOffsetX: number;
   trailOffsetY: number;
   size: number;
@@ -224,6 +227,9 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       homeY: 0,
       targetX: 0,
       targetY: 0,
+      startX: 0,
+      startY: 0,
+      delay: 0,
       trailOffsetX: (Math.random() - 0.5) * 40,
       trailOffsetY: (Math.random() - 0.5) * 40,
       size: 1.0 + Math.random() * 1.2,
@@ -281,10 +287,20 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
         [t[i], t[j]] = [t[j], t[i]];
       }
       const ps = particlesRef.current;
+      // max delay in frames — particles build up one-by-one
+      const maxDelay = 180;
       for (let i = 0; i < ps.length; i++) {
         const tp = t[i % t.length];
         ps[i].targetX = tp.x;
         ps[i].targetY = tp.y;
+        ps[i].startX = ps[i].px;
+        ps[i].startY = ps[i].py;
+        ps[i].vx = 0;
+        ps[i].vy = 0;
+        // ease-out distribution: sparse at start, dense at end
+        // u in [0,1], 1 - (1-u)^2 is ease-out
+        const u = Math.random();
+        ps[i].delay = (1 - (1 - u) * (1 - u)) * maxDelay;
       }
       stateRef.current = "shape";
       shapeTimerRef.current = 0;
@@ -450,7 +466,7 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
         }
       } else if (stateRef.current === "shape") {
         shapeTimerRef.current++;
-        if (shapeTimerRef.current === 140 && followUpRef.current === "cat") {
+        if (shapeTimerRef.current === 300 && followUpRef.current === "cat") {
           // transition O → cat
           const pts = shapeCat(340).map((p) => ({
             x: center.x + p.x - 170,
@@ -460,27 +476,42 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
           followUpRef.current = null;
           shapeTimerRef.current = 0;
           stateRef.current = "shape";
-        } else if (shapeTimerRef.current > 220) {
+        } else if (shapeTimerRef.current > 380) {
           stateRef.current = "sphere";
         }
       }
 
       for (const p of ps) {
-        const dx = p.targetX - p.px;
-        const dy = p.targetY - p.py;
-        let k = 0.08;
-        let damp = 0.72;
         if (stateRef.current === "shape") {
-          k = 0.055;
-          damp = 0.84;
-        } else if (stateRef.current === "follow") {
-          k = 0.12;
-          damp = 0.78;
+          const moveDuration = 45;
+          const elapsed = shapeTimerRef.current - p.delay;
+          if (elapsed <= 0) {
+            // still waiting — stay at start position
+            p.px = p.startX;
+            p.py = p.startY;
+          } else {
+            const t = Math.min(elapsed / moveDuration, 1);
+            // ease-out cubic: quick snap into place
+            const eased = 1 - (1 - t) * (1 - t) * (1 - t);
+            p.px = p.startX + (p.targetX - p.startX) * eased;
+            p.py = p.startY + (p.targetY - p.startY) * eased;
+          }
+          p.vx = 0;
+          p.vy = 0;
+        } else {
+          const dx = p.targetX - p.px;
+          const dy = p.targetY - p.py;
+          let k = 0.08;
+          let damp = 0.72;
+          if (stateRef.current === "follow") {
+            k = 0.12;
+            damp = 0.78;
+          }
+          p.vx = (p.vx + dx * k) * damp;
+          p.vy = (p.vy + dy * k) * damp;
+          p.px += p.vx;
+          p.py += p.vy;
         }
-        p.vx = (p.vx + dx * k) * damp;
-        p.vy = (p.vy + dy * k) * damp;
-        p.px += p.vx;
-        p.py += p.vy;
 
         const a =
           stateRef.current === "shape"

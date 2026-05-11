@@ -101,3 +101,8 @@ body {
   background-clip: text;
   color: transparent;
 }
+
+.logo-dark { display: none; }
+.logo-light { display: block; }
+:root[data-theme="dark"] .logo-dark { display: block; }
+:root[data-theme="dark"] .logo-light { display: none; }

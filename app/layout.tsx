@@ -26,10 +26,6 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://itsryns.cyou"),
   title: "Ryns — Backend Developer",
   description: "Backend developer yang juga kerjain frontend. Building things that work, and look good doing it.",
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
   openGraph: {
     title: "Ryns — Backend Developer",
     description: "Passionate programmer with 5+ years of freelance experience. Go · TS · Python · Rust.",
@@ -47,6 +43,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${instrument.variable} ${jetbrains.variable} antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <script
