@@ -32,12 +32,11 @@ function fibSphere(n: number) {
   return pts;
 }
 
-function sampleText(
-  text: string,
-  font: string,
+function sampleCanvas(
+  draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void,
   w: number,
   h: number,
-  step = 4
+  step = 5
 ): Point[] {
   const c = document.createElement("canvas");
   c.width = w;
@@ -45,29 +44,145 @@ function sampleText(
   const ctx = c.getContext("2d");
   if (!ctx) return [];
   ctx.fillStyle = "#000";
-  ctx.font = font;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, w / 2, h / 2);
+  draw(ctx, w, h);
   const data = ctx.getImageData(0, 0, w, h).data;
   const out: Point[] = [];
   for (let y = 0; y < h; y += step) {
     for (let x = 0; x < w; x += step) {
-      const idx = (y * w + x) * 4;
-      if (data[idx + 3] > 128) out.push({ x, y });
+      if (data[(y * w + x) * 4 + 3] > 128) out.push({ x, y });
     }
   }
   return out;
 }
 
-function isClosedLoop(pts: Point[]) {
-  if (pts.length < 10) return false;
+function shapeRingO(size = 320): Point[] {
+  return sampleCanvas(
+    (ctx, w, h) => {
+      const cx = w / 2;
+      const cy = h / 2;
+      const outer = Math.min(w, h) / 2 - 8;
+      const inner = outer - 34;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+      ctx.arc(cx, cy, inner, 0, Math.PI * 2, true);
+      ctx.fill("evenodd");
+    },
+    size,
+    size,
+    4
+  );
+}
+
+function shapeCat(size = 340): Point[] {
+  return sampleCanvas(
+    (ctx, w, h) => {
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      // head (fill)
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 90, 82, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // ears
+      ctx.beginPath();
+      ctx.moveTo(cx - 86, cy - 40);
+      ctx.lineTo(cx - 58, cy - 108);
+      ctx.lineTo(cx - 26, cy - 44);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + 26, cy - 44);
+      ctx.lineTo(cx + 58, cy - 108);
+      ctx.lineTo(cx + 86, cy - 40);
+      ctx.closePath();
+      ctx.fill();
+    },
+    size,
+    size,
+    4
+  );
+}
+
+function shapeText(text: string, font: string, w: number, h: number, step = 4): Point[] {
+  return sampleCanvas(
+    (ctx, width, height) => {
+      ctx.font = font;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, width / 2, height / 2);
+    },
+    w,
+    h,
+    step
+  );
+}
+
+function detectShape(pts: Point[]): "O" | "N" | "ryns" {
+  if (pts.length < 8) return "ryns";
   const xs = pts.map((p) => p.x);
   const ys = pts.map((p) => p.y);
-  const size = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-  if (size < 50) return false;
-  const d = Math.hypot(pts[0].x - pts[pts.length - 1].x, pts[0].y - pts[pts.length - 1].y);
-  return d < size * 0.45;
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const w = maxX - minX;
+  const h = maxY - minY;
+  const size = Math.max(w, h);
+  if (size < 40) return "ryns";
+
+  const dStartEnd = Math.hypot(
+    pts[0].x - pts[pts.length - 1].x,
+    pts[0].y - pts[pts.length - 1].y
+  );
+  const closed = dStartEnd < size * 0.4;
+  const aspect = w / Math.max(h, 1);
+
+  if (closed && aspect > 0.6 && aspect < 1.6) {
+    // roughly circular → O
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const dists = pts.map((p) => Math.hypot(p.x - cx, p.y - cy));
+    const avg = dists.reduce((a, b) => a + b, 0) / dists.length;
+    const variance = dists.reduce((a, d) => a + (d - avg) ** 2, 0) / dists.length;
+    const circ = Math.sqrt(variance) / avg;
+    if (circ < 0.3) return "O";
+  }
+
+  // check for N: 3+ vertical legs (down → up → down) with horizontal span
+  if (!closed && aspect > 0.5 && h > 40) {
+    let peaks = 0;
+    const smooth: number[] = [];
+    const window = 3;
+    for (let i = 0; i < pts.length; i++) {
+      let s = 0;
+      let c = 0;
+      for (let j = -window; j <= window; j++) {
+        const k = i + j;
+        if (k >= 0 && k < pts.length) {
+          s += pts[k].y;
+          c++;
+        }
+      }
+      smooth.push(s / c);
+    }
+    let dir = 0;
+    let reversals = 0;
+    for (let i = 4; i < smooth.length - 4; i++) {
+      const d = smooth[i + 4] - smooth[i];
+      if (Math.abs(d) < h * 0.05) continue;
+      const newDir = d > 0 ? 1 : -1;
+      if (dir !== 0 && newDir !== dir) reversals++;
+      dir = newDir;
+    }
+    if (reversals >= 2) return "N";
+    // fallback: N from box_corners
+    peaks = 0;
+    for (let i = 3; i < smooth.length - 3; i++) {
+      if (smooth[i] < smooth[i - 3] && smooth[i] < smooth[i + 3]) peaks++;
+    }
+    if (peaks >= 1 && aspect > 0.7) return "N";
+  }
+
+  return "ryns";
 }
 
 export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLElement | null> }) {
@@ -79,10 +194,10 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
   const angleRef = useRef(0);
   const tiltRef = useRef(0);
   const shapeTimerRef = useRef(0);
+  const followUpRef = useRef<null | "cat">(null);
   const centerRef = useRef({ x: 0, y: 0 });
-  const radiusRef = useRef(80);
+  const radiusRef = useRef(120);
   const rafRef = useRef(0);
-  const explodeRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -91,7 +206,7 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const N = 480;
+    const N = 700;
     const spherePts = fibSphere(N);
     particlesRef.current = spherePts.map((p) => ({
       sx: p.x,
@@ -105,7 +220,7 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       homeY: 0,
       targetX: 0,
       targetY: 0,
-      size: 1.0 + Math.random() * 1.0,
+      size: 1.0 + Math.random() * 1.2,
       alpha: 1,
     }));
 
@@ -124,19 +239,18 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const mobile = width < 768;
       centerRef.current = {
-        x: mobile ? width * 0.82 : Math.min(width - 220, width * 0.78),
-        y: mobile ? 180 : 260,
+        x: mobile ? width * 0.82 : Math.min(width - 260, width * 0.78),
+        y: mobile ? 200 : 280,
       };
-      radiusRef.current = mobile ? 55 : 95;
+      radiusRef.current = mobile ? 80 : 130;
 
-      // init particles to sphere positions
       const angle = angleRef.current;
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       for (const p of particlesRef.current) {
         const x = p.sx * cos - p.sz * sin;
         const z = p.sx * sin + p.sz * cos;
-        const scale = radiusRef.current * (1 + z * 0.2);
+        const scale = radiusRef.current * (1 + z * 0.22);
         if (p.px === 0 && p.py === 0) {
           p.px = centerRef.current.x + x * scale;
           p.py = centerRef.current.y + p.sy * scale;
@@ -156,43 +270,62 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       return Math.hypot(p.x - centerRef.current.x, p.y - centerRef.current.y);
     };
 
-    const triggerShape = (points: Point[]) => {
-      const cx = centerRef.current.x;
-      const cy = centerRef.current.y;
-      let targets: Point[] = [];
-      let font = "bold 140px Instrument Serif, serif";
-      let text = "Ryns";
-      let w = 500;
-      let h = 200;
-
-      if (isClosedLoop(points)) {
-        text = "O";
-        font = "bold 220px Instrument Serif, serif";
-        w = 300;
-        h = 300;
-      }
-
-      targets = sampleText(text, font, w, h, 5).map((p) => ({
-        x: cx + p.x - w / 2,
-        y: cy + p.y - h / 2,
-      }));
-
+    const morphTo = (targets: Point[]) => {
       if (targets.length === 0) return;
-
-      // shuffle for organic morph
-      for (let i = targets.length - 1; i > 0; i--) {
+      // shuffle
+      const t = targets.slice();
+      for (let i = t.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [targets[i], targets[j]] = [targets[j], targets[i]];
+        [t[i], t[j]] = [t[j], t[i]];
       }
-
       const ps = particlesRef.current;
       for (let i = 0; i < ps.length; i++) {
-        const t = targets[i % targets.length];
-        ps[i].targetX = t.x;
-        ps[i].targetY = t.y;
+        const tp = t[i % t.length];
+        ps[i].targetX = tp.x;
+        ps[i].targetY = tp.y;
       }
       stateRef.current = "shape";
       shapeTimerRef.current = 0;
+    };
+
+    const triggerShape = (points: Point[]) => {
+      const cx = centerRef.current.x;
+      const cy = centerRef.current.y;
+      const shape = detectShape(points);
+
+      if (shape === "O") {
+        const pts = shapeRingO(320).map((p) => ({
+          x: cx + p.x - 160,
+          y: cy + p.y - 160,
+        }));
+        followUpRef.current = "cat";
+        morphTo(pts);
+        return;
+      }
+
+      if (shape === "N") {
+        const font = "bold 160px Instrument Serif, serif";
+        const w = 620;
+        const h = 220;
+        const pts = shapeText("Nanda", font, w, h, 4).map((p) => ({
+          x: cx + p.x - w / 2,
+          y: cy + p.y - h / 2,
+        }));
+        followUpRef.current = null;
+        morphTo(pts);
+        return;
+      }
+
+      // default Ryns
+      const font = "bold 180px Instrument Serif, serif";
+      const w = 540;
+      const h = 230;
+      const pts = shapeText("Ryns", font, w, h, 4).map((p) => ({
+        x: cx + p.x - w / 2,
+        y: cy + p.y - h / 2,
+      }));
+      followUpRef.current = null;
+      morphTo(pts);
     };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -202,15 +335,14 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       drawingRef.current = true;
       drawingPointsRef.current = [getLocal(e)];
 
-      // if click started near sphere, explode briefly
+      // click near sphere → explode
       if (distToSphere(drawingPointsRef.current[0]) < radiusRef.current * 1.2) {
-        explodeRef.current = 1;
         for (const p of particlesRef.current) {
           const dx = p.px - centerRef.current.x;
           const dy = p.py - centerRef.current.y;
           const d = Math.hypot(dx, dy) || 1;
-          p.vx += (dx / d) * (4 + Math.random() * 3);
-          p.vy += (dy / d) * (4 + Math.random() * 3);
+          p.vx += (dx / d) * (5 + Math.random() * 4);
+          p.vy += (dy / d) * (5 + Math.random() * 4);
         }
       }
     };
@@ -263,17 +395,16 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
 
       const ps = particlesRef.current;
 
-      // compute sphere projections (homeX/Y)
       for (const p of ps) {
-        let x = p.sx * cosA - p.sz * sinA;
-        let z = p.sx * sinA + p.sz * cosA;
-        let y = p.sy;
+        const x = p.sx * cosA - p.sz * sinA;
+        const z = p.sx * sinA + p.sz * cosA;
+        const y = p.sy;
         const y2 = y * cosT - z * sinT;
         const z2 = y * sinT + z * cosT;
-        const scale = radius * (1 + z2 * 0.25);
+        const scale = radius * (1 + z2 * 0.22);
         p.homeX = center.x + x * scale;
         p.homeY = center.y + y2 * scale;
-        p.alpha = 0.2 + ((z2 + 1) / 2) * 0.8;
+        p.alpha = 0.22 + ((z2 + 1) / 2) * 0.78;
       }
 
       if (stateRef.current === "sphere") {
@@ -283,36 +414,38 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
         }
       } else if (stateRef.current === "shape") {
         shapeTimerRef.current++;
-        if (shapeTimerRef.current > 200) {
+        if (shapeTimerRef.current === 140 && followUpRef.current === "cat") {
+          // transition O → cat
+          const pts = shapeCat(340).map((p) => ({
+            x: center.x + p.x - 170,
+            y: center.y + p.y - 170,
+          }));
+          morphTo(pts);
+          followUpRef.current = null;
+          shapeTimerRef.current = 0;
+          stateRef.current = "shape";
+        } else if (shapeTimerRef.current > 220) {
           stateRef.current = "sphere";
         }
       }
 
-      if (explodeRef.current > 0) {
-        explodeRef.current *= 0.85;
-        if (explodeRef.current < 0.02) explodeRef.current = 0;
-      }
-
-      // integrate and draw
       for (const p of ps) {
         const dx = p.targetX - p.px;
         const dy = p.targetY - p.py;
-        const k = stateRef.current === "shape" ? 0.06 : 0.08;
-        const damp = stateRef.current === "shape" ? 0.82 : 0.72;
+        const k = stateRef.current === "shape" ? 0.055 : 0.08;
+        const damp = stateRef.current === "shape" ? 0.84 : 0.72;
         p.vx = (p.vx + dx * k) * damp;
         p.vy = (p.vy + dy * k) * damp;
         p.px += p.vx;
         p.py += p.vy;
 
         const a = stateRef.current === "shape" ? 0.95 : p.alpha;
-        const color = stateRef.current === "shape" ? "236, 72, 153" : "236, 72, 153";
         ctx.beginPath();
         ctx.arc(p.px, p.py, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${color}, ${a})`;
+        ctx.fillStyle = `rgba(236, 72, 153, ${a})`;
         ctx.fill();
       }
 
-      // draw active trail
       const path = drawingPointsRef.current;
       if (path.length > 1) {
         ctx.beginPath();
