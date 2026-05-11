@@ -51,13 +51,13 @@ export function Hero() {
         >
           <div className="md:col-span-7">
             <p className="text-xl leading-[1.4] text-foreground sm:text-2xl md:text-3xl">
-              <span className="font-serif italic">Backend developer</span>
-              <span className="text-muted">, </span>
+              <span className="font-serif italic">Passionate programmer</span>
+              <span className="text-muted"> with 5+ years of </span>
+              <span>freelance experience</span>
+              <span className="text-muted">.</span>
               <br />
-              <span>team player</span>
-              <span className="text-muted">. </span>
-              <span className="text-muted">Bikin tools di </span>
-              <span className="font-mono text-base sm:text-lg md:text-xl">Rust · Go · TS</span>
+              <span className="text-muted">Fluent in </span>
+              <span className="font-mono text-base sm:text-lg md:text-xl">Rust · Go · TS · Python</span>
               <span className="text-muted">.</span>
             </p>
           </div>
