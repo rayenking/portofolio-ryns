@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown, Sparkles } from "lucide-react";
 import { useRef } from "react";
-import { RuneCanvas } from "./RuneCanvas";
+import { PixelGlobe } from "./PixelGlobe";
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -24,7 +24,7 @@ export function Hero() {
       <div className="absolute inset-0 grid-bg opacity-40" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
 
-      <RuneCanvas parentRef={ref} />
+      <PixelGlobe parentRef={ref} />
 
       <motion.div style={{ y, opacity }} className="relative z-10 flex flex-1 flex-col justify-center max-w-6xl">
         <motion.div
