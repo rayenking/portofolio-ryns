@@ -33,9 +33,9 @@ export function Nav() {
       <div className="flex items-center justify-between px-6 py-5 sm:px-12 lg:px-24">
         <a
           href="#top"
-          className="group flex items-center gap-2 font-serif text-xl tracking-tight"
+          className="group relative flex items-center font-serif text-xl tracking-tight"
         >
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background transition-all group-hover:scale-105 group-hover:border-foreground/40">
+          <span className="relative z-0 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background transition-all group-hover:scale-105 group-hover:border-foreground/40">
             <Image
               src="/logo.png"
               alt="Ryns logo"
@@ -45,8 +45,8 @@ export function Nav() {
               priority
             />
           </span>
-          <span className="transition-opacity group-hover:opacity-60">
-            ryns<span className="italic text-muted">.</span>
+          <span className="relative z-10 -ml-3 transition-opacity group-hover:opacity-60">
+            yns<span className="italic text-muted">.</span>
           </span>
         </a>
         <ul className="hidden items-center gap-1 rounded-full border border-foreground/10 bg-background/50 p-1 backdrop-blur md:flex">

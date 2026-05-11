@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Mail, ArrowUpRight, Copy, Check } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -130,7 +131,18 @@ export function Contact() {
         </motion.div>
 
         <div className="mt-32 flex flex-col items-start justify-between gap-4 border-t border-foreground/10 pt-8 text-[10px] font-mono tracking-widest text-muted uppercase sm:flex-row sm:items-center">
-          <span>© 2026 Ryns · rayenking</span>
+          <span className="flex items-center gap-2">
+            <span className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-foreground/15 bg-background">
+              <Image
+                src="/logo.png"
+                alt="Ryns logo"
+                width={24}
+                height={24}
+                className="h-full w-full object-cover dark:invert"
+              />
+            </span>
+            <span>© 2026 Ryns · rayenking</span>
+          </span>
           <span className="flex items-center gap-3">
             <span>Next.js</span>
             <span>×</span>
