@@ -67,13 +67,13 @@ const projects: FeaturedProject[] = [
           Digital photobooth untuk <span className="italic">event profesional</span>.
         </>
       ),
-      body: "Dibangun untuk operator event yang butuh kontrol penuh: multiple print sizes (4×3 strip, 4×6, 6×6, 6×4), AI-enhanced filters via Gemini, dan capture multi-shot langsung dari browser.",
+      body: "Dibangun untuk operator event yang butuh kontrol penuh: multiple print sizes (4×3 strip, 4×6 landscape, 6×6 square, 6×4 portrait), capture multi-shot langsung dari browser, dan customizable template per event.",
     },
-    stack: ["React", "Vite", "Express", "Bun", "Tailwind", "Gemini API"],
+    stack: ["React", "Vite", "Express", "Bun", "Tailwind"],
     features: [
       { icon: Camera, label: "Live Capture", desc: "Browser camera, multi-shot sequence" },
       { icon: Layout, label: "Print Sizes", desc: "Strip, square, portrait, landscape" },
-      { icon: Sparkles, label: "AI Filters", desc: "Gemini-powered enhancements" },
+      { icon: Sparkles, label: "Custom Templates", desc: "Per-event branding & styling" },
     ],
     cta: {
       primary: { label: "Try it live", href: "https://na-booth.itsryns.cyou" },
