@@ -14,12 +14,14 @@ type Particle = {
   homeY: number;
   targetX: number;
   targetY: number;
+  trailOffsetX: number;
+  trailOffsetY: number;
   size: number;
   alpha: number;
 };
 
 type Point = { x: number; y: number };
-type Mode = "sphere" | "shape";
+type Mode = "sphere" | "follow" | "shape";
 
 function fibSphere(n: number) {
   const pts: { x: number; y: number; z: number }[] = [];
@@ -191,6 +193,8 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
   const stateRef = useRef<Mode>("sphere");
   const drawingRef = useRef(false);
   const drawingPointsRef = useRef<Point[]>([]);
+  const pointerRef = useRef<Point | null>(null);
+  const pointerTrailRef = useRef<Point[]>([]);
   const angleRef = useRef(0);
   const tiltRef = useRef(0);
   const shapeTimerRef = useRef(0);
@@ -220,6 +224,8 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       homeY: 0,
       targetX: 0,
       targetY: 0,
+      trailOffsetX: (Math.random() - 0.5) * 40,
+      trailOffsetY: (Math.random() - 0.5) * 40,
       size: 1.0 + Math.random() * 1.2,
       alpha: 1,
     }));
@@ -264,10 +270,6 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
     const getLocal = (e: PointerEvent): Point => {
       const rect = parent.getBoundingClientRect();
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-
-    const distToSphere = (p: Point) => {
-      return Math.hypot(p.x - centerRef.current.x, p.y - centerRef.current.y);
     };
 
     const morphTo = (targets: Point[]) => {
@@ -333,22 +335,15 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       if (target.closest("a, button, input, textarea, select")) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
       drawingRef.current = true;
-      drawingPointsRef.current = [getLocal(e)];
+      const p = getLocal(e);
+      drawingPointsRef.current = [p];
+      pointerRef.current = p;
+      pointerTrailRef.current = [p];
+      stateRef.current = "follow";
 
       // prevent scroll/pan on touch
       if (e.pointerType === "touch" || e.pointerType === "pen") {
         e.preventDefault();
-      }
-
-      // click near sphere → explode
-      if (distToSphere(drawingPointsRef.current[0]) < radiusRef.current * 1.2) {
-        for (const p of particlesRef.current) {
-          const dx = p.px - centerRef.current.x;
-          const dy = p.py - centerRef.current.y;
-          const d = Math.hypot(dx, dy) || 1;
-          p.vx += (dx / d) * (5 + Math.random() * 4);
-          p.vy += (dy / d) * (5 + Math.random() * 4);
-        }
       }
     };
 
@@ -358,15 +353,21 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
         e.preventDefault();
       }
       const p = getLocal(e);
+      pointerRef.current = p;
       const last = drawingPointsRef.current[drawingPointsRef.current.length - 1];
       if (!last || Math.hypot(p.x - last.x, p.y - last.y) > 3) {
         drawingPointsRef.current.push(p);
       }
+      // maintain a short trail for snake head positions
+      pointerTrailRef.current.push(p);
+      if (pointerTrailRef.current.length > 120) pointerTrailRef.current.shift();
     };
 
     const onPointerUp = (e: PointerEvent) => {
       if (!drawingRef.current) return;
       drawingRef.current = false;
+      pointerRef.current = null;
+      pointerTrailRef.current = [];
       const pts = drawingPointsRef.current;
       if (pts.length > 6) {
         const xs = pts.map((p) => p.x);
@@ -375,10 +376,15 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
           Math.max(...xs) - Math.min(...xs),
           Math.max(...ys) - Math.min(...ys)
         );
-        if (size > 30) triggerShape(pts);
+        if (size > 30) {
+          triggerShape(pts);
+        } else {
+          stateRef.current = "sphere";
+        }
+      } else {
+        stateRef.current = "sphere";
       }
       drawingPointsRef.current = [];
-      // dismiss default behaviors
       if (e.pointerType === "touch" || e.pointerType === "pen") {
         e.preventDefault();
       }
@@ -425,6 +431,23 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
           p.targetX = p.homeX;
           p.targetY = p.homeY;
         }
+      } else if (stateRef.current === "follow") {
+        // particles form a snake trail behind the pointer
+        const trail = pointerTrailRef.current;
+        if (trail.length > 0) {
+          for (let i = 0; i < ps.length; i++) {
+            const p = ps[i];
+            // distribute along trail from head (latest) to tail (oldest)
+            // older particles go further back in trail; use index mod trail length
+            const trailIdx = Math.max(
+              0,
+              trail.length - 1 - Math.floor((i / ps.length) * trail.length)
+            );
+            const tp = trail[trailIdx];
+            p.targetX = tp.x + p.trailOffsetX;
+            p.targetY = tp.y + p.trailOffsetY;
+          }
+        }
       } else if (stateRef.current === "shape") {
         shapeTimerRef.current++;
         if (shapeTimerRef.current === 140 && followUpRef.current === "cat") {
@@ -445,33 +468,30 @@ export function PixelGlobe({ parentRef }: { parentRef: React.RefObject<HTMLEleme
       for (const p of ps) {
         const dx = p.targetX - p.px;
         const dy = p.targetY - p.py;
-        const k = stateRef.current === "shape" ? 0.055 : 0.08;
-        const damp = stateRef.current === "shape" ? 0.84 : 0.72;
+        let k = 0.08;
+        let damp = 0.72;
+        if (stateRef.current === "shape") {
+          k = 0.055;
+          damp = 0.84;
+        } else if (stateRef.current === "follow") {
+          k = 0.12;
+          damp = 0.78;
+        }
         p.vx = (p.vx + dx * k) * damp;
         p.vy = (p.vy + dy * k) * damp;
         p.px += p.vx;
         p.py += p.vy;
 
-        const a = stateRef.current === "shape" ? 0.95 : p.alpha;
+        const a =
+          stateRef.current === "shape"
+            ? 0.95
+            : stateRef.current === "follow"
+              ? 0.85
+              : p.alpha;
         ctx.beginPath();
         ctx.arc(p.px, p.py, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(236, 72, 153, ${a})`;
         ctx.fill();
-      }
-
-      const path = drawingPointsRef.current;
-      if (path.length > 1) {
-        ctx.beginPath();
-        ctx.moveTo(path[0].x, path[0].y);
-        for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
-        ctx.strokeStyle = "rgba(236, 72, 153, 0.55)";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.shadowColor = "rgba(236, 72, 153, 0.4)";
-        ctx.shadowBlur = 6;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
       }
 
       rafRef.current = requestAnimationFrame(render);
