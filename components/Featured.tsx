@@ -28,17 +28,17 @@ const projects: FeaturedProject[] = [
     num: "01",
     badge: "Open Source · MIT",
     icon: "i",
-    name: "iris-ssh-manager",
+    name: "IrisX",
     tagline: "Flagship",
     description:
-      "A modern, cross-platform SSH client built with Tauri + Rust. Personal alternative to Termius / Bitvise — fast, lightweight, and fully open source.",
+      "A modern, cross-platform SSH client and connection manager built with Tauri 2.0 + Rust. Fast, lightweight, fully open source, and made as a personal alternative to Termius / Bitvise.",
     caseStudy: {
       heading: (
         <>
           Building the SSH client I <span className="italic">wished</span> existed.
         </>
       ),
-      body: "After years of switching between Termius, iTerm, and raw OpenSSH, I built Iris to unify everything: connection management, terminal, SFTP, and port forwarding — in a single native app under 20MB.",
+      body: "After years of switching between Termius, iTerm, and raw OpenSSH, I built IrisX to bring connection management, terminal, SFTP, port forwarding, snippets, and quick actions into one native desktop app.",
     },
     stack: ["Tauri 2.0", "Rust", "React", "TypeScript", "Tailwind v4", "xterm.js", "russh"],
     features: [
@@ -48,8 +48,8 @@ const projects: FeaturedProject[] = [
       { icon: Shield, label: "OS Keychain", desc: "Native credential storage" },
     ],
     cta: {
-      primary: { label: "View on GitHub", href: "https://github.com/rayenking/iris-ssh-manager" },
-      secondary: { label: "Download", href: "https://github.com/rayenking/iris-ssh-manager/releases" },
+      primary: { label: "View on GitHub", href: "https://github.com/rayenking/irisx" },
+      secondary: { label: "Download", href: "https://github.com/rayenking/irisx/releases" },
     },
     mock: "terminal",
     tint: "from-pink-500/10 to-purple-500/10",
